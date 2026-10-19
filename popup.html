@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Website Screenshot</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo-area">
+        <svg class="camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+          <circle cx="12" cy="13" r="4"></circle>
+        </svg>
+        <h1>Website Screenshot</h1>
+      </div>
+      <p class="tagline">Hurtig og nem skærmoptagelse</p>
+    </header>
+
+    <div class="actions">
+      <button id="btn-visible" class="action-btn">
+        <div class="btn-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+        </div>
+        <div class="btn-content">
+          <span class="btn-title">Synligt område</span>
+          <span class="btn-desc">Fanger alt synligt i vinduet</span>
+        </div>
+      </button>
+
+      <button id="btn-crop" class="action-btn">
+        <div class="btn-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2v14a2 2 0 0 0 2 2h14"></path>
+            <path d="M18 22V8a2 2 0 0 0-2-2H2"></path>
+          </svg>
+        </div>
+        <div class="btn-content">
+          <span class="btn-title">Valgt område</span>
+          <span class="btn-desc">Marker et udsnit med musen</span>
+        </div>
+      </button>
+
+      <button id="btn-fullpage" class="action-btn">
+        <div class="btn-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="7 13 12 18 17 13"></polyline>
+            <polyline points="7 6 12 11 17 6"></polyline>
+          </svg>
+        </div>
+        <div class="btn-content">
+          <span class="btn-title">Fuld side</span>
+          <span class="btn-desc">Ruller og fanger hele siden</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- Status message -->
+    <div id="status-message" class="status-message hidden">
+      <div class="spinner"></div>
+      <span id="status-text">Arbejder...</span>
+    </div>
+
+    <!-- Preview Modal / Section -->
+    <div id="preview-section" class="preview-section hidden">
+      <div class="preview-header">
+        <span>Resultat</span>
+        <button id="btn-close-preview" class="icon-close" title="Luk preview">&times;</button>
+      </div>
+      <div class="preview-container">
+        <img id="preview-image" src="" alt="Screenshot preview">
+      </div>
+      <div class="preview-actions">
+        <button id="btn-download" class="primary-btn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download PNG
+        </button>
+        <button id="btn-copy" class="secondary-btn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          Kopiér
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
