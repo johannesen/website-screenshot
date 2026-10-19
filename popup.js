@@ -35,6 +35,12 @@ function hidePreview() {
 
 // 1. Capture Visible Area
 btnVisible.addEventListener("click", async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab && isRestrictedUrl(tab.url)) {
+    alert("Chrome tillader ikke udvidelser at tage screenshots af Chrome Web Store eller interne browsersider (chrome://) af sikkerhedsmæssige årsager. Prøv venligst på en almindelig webside.");
+    return;
+  }
+
   showStatus("Tager screenshot...");
   hidePreview();
 
