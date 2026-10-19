@@ -48,30 +48,47 @@ btnVisible.addEventListener("click", async () => {
   });
 });
 
+function isRestrictedUrl(url) {
+  if (!url) return true;
+  return (
+    url.startsWith("chrome://") ||
+    url.startsWith("chrome-extension://") ||
+    url.startsWith("edge://") ||
+    url.startsWith("about:") ||
+    url.startsWith("view-source:") ||
+    url.includes("chromewebstore.google.com") ||
+    url.includes("chrome.google.com/webstore")
+  );
+}
+
 // 2. Capture Selected Area (Crop)
 btnCrop.addEventListener("click", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !tab.id) return;
 
-  // Check if we can inject script (skip chrome:// or edge:// pages)
-  if (tab.url.startsWith("chrome://") || tab.url.startsWith("edge://") || tab.url.startsWith("about:")) {
-    alert("Kan ikke tage screenshot af interne browsersider.");
+  if (isRestrictedUrl(tab.url)) {
+    alert("Chrome tillader ikke udvidelser at køre scripts på Chrome Web Store eller interne browsersider af sikkerhedsmæssige årsager. Prøv venligst på en almindelig webside (f.eks. google.com, wikipedia.org osv.).");
     return;
   }
 
-  // Inject crop overlay script and CSS
-  await chrome.scripting.insertCSS({
-    target: { tabId: tab.id },
-    files: ["content/crop.css"]
-  });
+  try {
+    // Inject crop overlay script and CSS
+    await chrome.scripting.insertCSS({
+      target: { tabId: tab.id },
+      files: ["content/crop.css"]
+    });
 
-  await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    files: ["content/crop.js"]
-  });
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["content/crop.js"]
+    });
 
-  // Close popup so user can select the area
-  window.close();
+    // Close popup so user can select the area
+    window.close();
+  } catch (err) {
+    console.error("Kunne ikke starte områdevalg:", err);
+    alert("Kunne ikke starte på denne side: " + err.message);
+  }
 });
 
 // 3. Capture Full Page
@@ -79,20 +96,26 @@ btnFullPage.addEventListener("click", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !tab.id) return;
 
-  if (tab.url.startsWith("chrome://") || tab.url.startsWith("edge://") || tab.url.startsWith("about:")) {
-    alert("Kan ikke tage screenshot af interne browsersider.");
+  if (isRestrictedUrl(tab.url)) {
+    alert("Chrome tillader ikke udvidelser at køre scripts på Chrome Web Store eller interne browsersider af sikkerhedsmæssige årsager. Prøv venligst på en almindelig webside (f.eks. google.com, wikipedia.org osv.).");
     return;
   }
 
   showStatus("Forbereder fuld side optagelse...");
 
-  await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    files: ["content/fullpage.js"]
-  });
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["content/fullpage.js"]
+    });
 
-  // Content script will handle scrolling and call captureVisibleTab, then trigger download or notify
-  window.close();
+    // Content script will handle scrolling and call captureVisibleTab, then trigger download or notify
+    window.close();
+  } catch (err) {
+    hideStatus();
+    console.error("Kunne ikke starte fuld side:", err);
+    alert("Kunne ikke køre på denne side: " + err.message);
+  }
 });
 
 // Download button action
