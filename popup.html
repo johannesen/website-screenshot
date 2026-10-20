@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Website Screenshot</title>
+  <title>Website Screenshot Pro</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -14,15 +14,24 @@
           <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
           <circle cx="12" cy="13" r="4"></circle>
         </svg>
-        <h1>Website Screenshot</h1>
+        <h1>Website Screenshot Pro</h1>
       </div>
-      <p class="tagline">Hurtig og nem skærmoptagelse</p>
+      <div class="header-options">
+        <label class="timer-toggle" title="3 sekunders forsinkelse før optagelse (godt til dropdowns/menuer)">
+          <input type="checkbox" id="chk-timer">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>3s timer</span>
+        </label>
+      </div>
     </header>
 
     <div class="actions">
       <button id="btn-visible" class="action-btn">
         <div class="btn-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
             <line x1="8" y1="21" x2="16" y2="21"></line>
             <line x1="12" y1="17" x2="12" y2="21"></line>
@@ -30,35 +39,62 @@
         </div>
         <div class="btn-content">
           <span class="btn-title">Synligt område</span>
-          <span class="btn-desc">Fanger alt synligt i vinduet</span>
+          <span class="btn-shortcut">Alt+Shift+V</span>
         </div>
       </button>
 
       <button id="btn-crop" class="action-btn">
         <div class="btn-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 2v14a2 2 0 0 0 2 2h14"></path>
             <path d="M18 22V8a2 2 0 0 0-2-2H2"></path>
           </svg>
         </div>
         <div class="btn-content">
           <span class="btn-title">Valgt område</span>
-          <span class="btn-desc">Marker et udsnit med musen</span>
+          <span class="btn-shortcut">Alt+Shift+S</span>
+        </div>
+      </button>
+
+      <button id="btn-element" class="action-btn">
+        <div class="btn-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 7V4h3"></path>
+            <path d="M20 7V4h-3"></path>
+            <path d="M4 17v3h3"></path>
+            <path d="M20 17v3h-3"></path>
+            <rect x="8" y="8" width="8" height="8" rx="1"></rect>
+          </svg>
+        </div>
+        <div class="btn-content">
+          <span class="btn-title">Element-vælger</span>
+          <span class="btn-desc">Klik på et DOM element</span>
         </div>
       </button>
 
       <button id="btn-fullpage" class="action-btn">
         <div class="btn-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="7 13 12 18 17 13"></polyline>
             <polyline points="7 6 12 11 17 6"></polyline>
           </svg>
         </div>
         <div class="btn-content">
           <span class="btn-title">Fuld side</span>
-          <span class="btn-desc">Ruller og fanger hele siden</span>
+          <span class="btn-shortcut">Alt+Shift+F</span>
         </div>
       </button>
+    </div>
+
+    <!-- Mode preference setting -->
+    <div class="settings-bar">
+      <label class="setting-item" title="Vælg hvad der skal ske, når et screenshot tages">
+        <span>Standard handling:</span>
+        <select id="sel-flow">
+          <option value="editor" selected>Åbn i Editor</option>
+          <option value="preview">Hurtigvisning i Popup</option>
+        </select>
+      </label>
     </div>
 
     <!-- Status message -->
@@ -70,23 +106,30 @@
     <!-- Preview Modal / Section -->
     <div id="preview-section" class="preview-section hidden">
       <div class="preview-header">
-        <span>Resultat</span>
+        <span>Hurtigvisning</span>
         <button id="btn-close-preview" class="icon-close" title="Luk preview">&times;</button>
       </div>
       <div class="preview-container">
         <img id="preview-image" src="" alt="Screenshot preview">
       </div>
       <div class="preview-actions">
-        <button id="btn-download" class="primary-btn">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="btn-open-editor" class="primary-btn" title="Åbn i fuld billededitor">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+          Rediger
+        </button>
+        <button id="btn-download" class="secondary-btn">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
             <line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
-          Download PNG
+          Download
         </button>
         <button id="btn-copy" class="secondary-btn">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
           </svg>

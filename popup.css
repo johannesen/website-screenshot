@@ -7,7 +7,7 @@
   --text-muted: #64748b;
   --border-color: #e2e8f0;
   --border-radius: 10px;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -27,19 +27,21 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 body {
   width: 320px;
   background-color: var(--bg-color);
   color: var(--text-main);
-  padding: 16px;
-  overflow: hidden;
+  padding: 14px;
 }
 
 .header {
-  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
 }
 
 .logo-area {
@@ -49,73 +51,80 @@ body {
 }
 
 .camera-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   color: var(--primary-color);
 }
 
 h1 {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--text-main);
 }
 
-.tagline {
+.timer-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   color: var(--text-muted);
-  margin-top: 2px;
+  cursor: pointer;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  padding: 4px 8px;
+  border-radius: 6px;
+  user-select: none;
+}
+
+.timer-toggle input {
+  cursor: pointer;
 }
 
 .actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .action-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
-  padding: 10px 14px;
+  padding: 9px 12px;
   cursor: pointer;
   text-align: left;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   box-shadow: var(--shadow);
 }
 
 .action-btn:hover {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
-  transform: translateY(-1px);
 }
 
 .action-btn:hover .btn-icon,
 .action-btn:hover .btn-title,
+.action-btn:hover .btn-shortcut,
 .action-btn:hover .btn-desc {
   color: #ffffff;
 }
 
 .btn-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   color: var(--primary-color);
-  flex-shrink: 0;
+  margin-right: 10px;
   display: flex;
   align-items: center;
-  justify-content: center;
-}
-
-.btn-icon svg {
-  width: 100%;
-  height: 100%;
 }
 
 .btn-content {
+  flex: 1;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .btn-title {
@@ -124,12 +133,48 @@ h1 {
   color: var(--text-main);
 }
 
+.btn-shortcut {
+  font-size: 10px;
+  font-family: monospace;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+
+.action-btn:hover .btn-shortcut {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .btn-desc {
   font-size: 11px;
   color: var(--text-muted);
 }
 
-/* Status message */
+.settings-bar {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.setting-item select {
+  font-size: 11px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-main);
+  outline: none;
+}
+
 .status-message {
   display: flex;
   align-items: center;
@@ -140,12 +185,12 @@ h1 {
   border: 1px solid var(--border-color);
   padding: 8px 12px;
   border-radius: var(--border-radius);
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .spinner {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border: 2px solid var(--border-color);
   border-top: 2px solid var(--primary-color);
   border-radius: 50%;
@@ -157,7 +202,6 @@ h1 {
   100% { transform: rotate(360deg); }
 }
 
-/* Preview Section */
 .preview-section {
   margin-top: 12px;
   border: 1px solid var(--border-color);
@@ -170,7 +214,7 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
   margin-bottom: 8px;
@@ -186,7 +230,7 @@ h1 {
 }
 
 .preview-container {
-  max-height: 140px;
+  max-height: 130px;
   overflow-y: auto;
   border-radius: 6px;
   background: #000;
@@ -203,7 +247,7 @@ h1 {
 
 .preview-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   margin-top: 10px;
 }
 
@@ -212,14 +256,13 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 10px;
+  gap: 4px;
+  padding: 6px 8px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: background 0.2s;
 }
 
 .primary-btn {

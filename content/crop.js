@@ -121,11 +121,20 @@
 
         const croppedDataUrl = canvas.toDataURL("image/png");
 
-        // Download the cropped screenshot
-        chrome.runtime.sendMessage({
-          action: "downloadImage",
-          dataUrl: croppedDataUrl,
-          filename: `screenshot-crop-${Date.now()}.png`
+        // Respect user's default flow setting (editor vs direct download)
+        chrome.storage.local.get(["defaultFlow"], (res) => {
+          if (res.defaultFlow === "preview") {
+            chrome.runtime.sendMessage({
+              action: "downloadImage",
+              dataUrl: croppedDataUrl,
+              filename: `screenshot-crop-${Date.now()}.png`
+            });
+          } else {
+            chrome.runtime.sendMessage({
+              action: "openEditor",
+              dataUrl: croppedDataUrl
+            });
+          }
         });
       };
       img.src = response.dataUrl;

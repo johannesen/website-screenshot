@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Website Screenshot Capture",
-  "version": "1.0.0",
-  "description": "Tag nemt og hurtigt skærmbilleder af websites: synligt område, udvalgt område eller fuld side.",
+  "version": "2.0.0",
+  "description": "The ultimate website screenshot tool: visible area, crop, full page, DOM element picker, delay timer, OCR, and full vector editor.",
   "permissions": [
     "activeTab",
     "scripting",
-    "downloads"
+    "downloads",
+    "storage"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -18,6 +19,26 @@
   },
   "background": {
     "service_worker": "background.js"
+  },
+  "commands": {
+    "capture-visible": {
+      "suggested_key": {
+        "default": "Alt+Shift+V"
+      },
+      "description": "Capture visible viewport"
+    },
+    "capture-crop": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "Capture selected area"
+    },
+    "capture-fullpage": {
+      "suggested_key": {
+        "default": "Alt+Shift+F"
+      },
+      "description": "Capture full page"
+    }
   },
   "icons": {
     "16": "icons/icon16.png",

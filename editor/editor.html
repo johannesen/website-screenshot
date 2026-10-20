@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Screenshot Pro Editor</title>
+  <link rel="stylesheet" href="editor.css">
+</head>
+<body>
+  <!-- Top App Bar -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+          <circle cx="12" cy="13" r="4"></circle>
+        </svg>
+        <span>Screenshot Pro Editor</span>
+      </div>
+      <div class="history-controls">
+        <button id="btn-undo" class="tool-btn" title="Undo (Ctrl+Z)" disabled>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 7v6h6"></path>
+            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+          </svg>
+        </button>
+        <button id="btn-redo" class="tool-btn" title="Redo (Ctrl+Y)" disabled>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 7v6h-6"></path>
+            <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Tools in Header -->
+    <div class="toolbar">
+      <button class="tool-btn active" data-tool="select" title="Select / Move / Resize (V)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3l7 18 3-7 7-3L3 3z"></path>
+        </svg>
+      </button>
+
+      <div class="tool-divider"></div>
+
+      <button class="tool-btn" data-tool="arrow" title="Arrow (A)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="19" x2="19" y2="5"></line>
+          <polyline points="9 5 19 5 19 15"></polyline>
+        </svg>
+      </button>
+
+      <button class="tool-btn" data-tool="rect" title="Rectangle (R)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        </svg>
+      </button>
+
+      <button class="tool-btn" data-tool="circle" title="Circle (C)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9"></circle>
+        </svg>
+      </button>
+
+      <button class="tool-btn" data-tool="text" title="Text (T)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="4 7 4 4 20 4 20 7"></polyline>
+          <line x1="9" y1="20" x2="15" y2="20"></line>
+          <line x1="12" y1="4" x2="12" y2="20"></line>
+        </svg>
+      </button>
+
+      <button class="tool-btn" data-tool="highlighter" title="Highlighter (H)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 20h9"></path>
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+        </svg>
+      </button>
+
+      <button class="tool-btn" data-tool="blur" title="Blur / Pixelate Censorship (B)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+        </svg>
+      </button>
+
+      <button class="tool-btn" data-tool="step" title="Numbered Step Bubbles 1, 2, 3... (S)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 8v8"></path>
+          <path d="M10 10l2-2"></path>
+        </svg>
+      </button>
+
+      <div class="tool-divider"></div>
+
+      <!-- Colors & Stroke -->
+      <div class="color-picker-wrapper" title="Color">
+        <input type="color" id="tool-color" value="#ef4444">
+      </div>
+
+      <div class="stroke-width-wrapper" title="Line Thickness">
+        <select id="tool-stroke-width">
+          <option value="2">2px</option>
+          <option value="4" selected>4px</option>
+          <option value="8">8px</option>
+          <option value="14">14px</option>
+        </select>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <button id="btn-crop-mode" class="tool-btn" title="Crop Canvas">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 2v14a2 2 0 0 0 2 2h14"></path>
+          <path d="M18 22V8a2 2 0 0 0-2-2H2"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="header-right">
+      <button id="btn-ocr" class="action-btn-secondary" title="Extract text via OCR">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="4 7 4 4 20 4 20 7"></polyline>
+          <line x1="9" y1="20" x2="15" y2="20"></line>
+          <line x1="12" y1="4" x2="12" y2="20"></line>
+        </svg>
+        OCR Tekst
+      </button>
+
+      <button id="btn-copy-canvas" class="action-btn-secondary" title="Copy image to clipboard">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        Kopiér
+      </button>
+
+      <div class="download-dropdown">
+        <button id="btn-download-canvas" class="action-btn-primary">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download
+        </button>
+        <select id="export-format" class="format-select">
+          <option value="png">PNG</option>
+          <option value="jpeg">JPEG</option>
+          <option value="webp">WebP</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Work Area -->
+  <div class="main-layout">
+    <!-- Center Canvas Area -->
+    <main class="canvas-viewport" id="canvas-viewport">
+      <div id="canvas-container-outer" class="canvas-outer">
+        <canvas id="main-canvas"></canvas>
+      </div>
+    </main>
+
+    <!-- Right Side CleanShot X Backdrop & Inspector Panel -->
+    <aside class="side-panel">
+      <div class="panel-section">
+        <h3>CleanShot Lærred & Baggrund</h3>
+        <p class="panel-desc">Tilføj smuk padding, skygge og gradient bag dit billede.</p>
+
+        <div class="control-row">
+          <label>Polstring (Padding)</label>
+          <input type="range" id="backdrop-padding" min="0" max="100" value="0">
+          <span id="backdrop-padding-val">0px</span>
+        </div>
+
+        <div class="control-row">
+          <label>Hjørnerundning</label>
+          <input type="range" id="backdrop-radius" min="0" max="32" value="0">
+          <span id="backdrop-radius-val">0px</span>
+        </div>
+
+        <div class="control-row">
+          <label>Skygge</label>
+          <input type="range" id="backdrop-shadow" min="0" max="60" value="0">
+          <span id="backdrop-shadow-val">Ingen</span>
+        </div>
+
+        <div class="gradient-presets">
+          <div class="grad-preset active" data-bg="transparent" title="Transparent" style="background: repeating-conic-gradient(#cbd5e1 0% 25%, #f1f5f9 0% 50%) 50% / 10px 10px;"></div>
+          <div class="grad-preset" data-bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+          <div class="grad-preset" data-bg="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+          <div class="grad-preset" data-bg="linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></div>
+          <div class="grad-preset" data-bg="linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);"></div>
+          <div class="grad-preset" data-bg="linear-gradient(135deg, #fa709a 0%, #fee140 100%)" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);"></div>
+          <div class="grad-preset" data-bg="#0f172a" style="background: #0f172a;"></div>
+          <div class="grad-preset" data-bg="#ffffff" style="background: #ffffff; border: 1px solid #cbd5e1;"></div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h3>Tastaturgenveje</h3>
+        <ul class="shortcut-list">
+          <li><kbd>V</kbd> Vælg & Flyt</li>
+          <li><kbd>A</kbd> Pil</li>
+          <li><kbd>R</kbd> Rektangel</li>
+          <li><kbd>C</kbd> Cirkel</li>
+          <li><kbd>T</kbd> Tekst</li>
+          <li><kbd>H</kbd> Overstregning</li>
+          <li><kbd>B</kbd> Sløring / Censor</li>
+          <li><kbd>S</kbd> Trin-boble</li>
+          <li><kbd>Del</kbd> Slet valgte</li>
+          <li><kbd>Ctrl+Z</kbd> Fortryd</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- OCR Result Modal -->
+  <div id="ocr-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>OCR Tekstgenkendelse</h3>
+        <button id="btn-close-ocr" class="icon-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="ocr-result-text" placeholder="Behandler tekst i billedet..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-copy-ocr" class="action-btn-primary">Kopiér Tekst</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../lib/fabric.min.js"></script>
+  <script src="../lib/tesseract.min.js"></script>
+  <script src="editor.js"></script>
+</body>
+</html>

@@ -81,10 +81,19 @@
 
       const fullDataUrl = canvas.toDataURL("image/png");
 
-      chrome.runtime.sendMessage({
-        action: "downloadImage",
-        dataUrl: fullDataUrl,
-        filename: `screenshot-fullpage-${Date.now()}.png`
+      chrome.storage.local.get(["defaultFlow"], (res) => {
+        if (res.defaultFlow === "preview") {
+          chrome.runtime.sendMessage({
+            action: "downloadImage",
+            dataUrl: fullDataUrl,
+            filename: `screenshot-fullpage-${Date.now()}.png`
+          });
+        } else {
+          chrome.runtime.sendMessage({
+            action: "openEditor",
+            dataUrl: fullDataUrl
+          });
+        }
       });
 
     } catch (err) {
