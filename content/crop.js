@@ -121,18 +121,25 @@
 
         const croppedDataUrl = canvas.toDataURL("image/png");
 
+        const sourceUrl = window.location.href;
+        let domain = "crop";
+        try { domain = window.location.hostname.replace(/^www\./, ""); } catch(e){}
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+
         // Respect user's default flow setting (editor vs direct download)
         chrome.storage.local.get(["defaultFlow"], (res) => {
           if (res.defaultFlow === "preview") {
             chrome.runtime.sendMessage({
               action: "downloadImage",
               dataUrl: croppedDataUrl,
-              filename: `screenshot-crop-${Date.now()}.png`
+              filename: `screenshot_${domain}_${timestamp}.png`,
+              sourceUrl: sourceUrl
             });
           } else {
             chrome.runtime.sendMessage({
               action: "openEditor",
-              dataUrl: croppedDataUrl
+              dataUrl: croppedDataUrl,
+              sourceUrl: sourceUrl
             });
           }
         });

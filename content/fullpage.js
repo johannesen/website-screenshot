@@ -81,17 +81,24 @@
 
       const fullDataUrl = canvas.toDataURL("image/png");
 
+      const sourceUrl = window.location.href;
+      let domain = "fullpage";
+      try { domain = window.location.hostname.replace(/^www\./, ""); } catch(e){}
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+
       chrome.storage.local.get(["defaultFlow"], (res) => {
         if (res.defaultFlow === "preview") {
           chrome.runtime.sendMessage({
             action: "downloadImage",
             dataUrl: fullDataUrl,
-            filename: `screenshot-fullpage-${Date.now()}.png`
+            filename: `screenshot_${domain}_${timestamp}.png`,
+            sourceUrl: sourceUrl
           });
         } else {
           chrome.runtime.sendMessage({
             action: "openEditor",
-            dataUrl: fullDataUrl
+            dataUrl: fullDataUrl,
+            sourceUrl: sourceUrl
           });
         }
       });

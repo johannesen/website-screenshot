@@ -1,4 +1,4 @@
-// editor/editor.js - Fabric.js vector image editor with genuine pixelated blur, CleanShot styling, i18n & OCR
+// editor/editor.js - Fabric.js vector image editor with zoom, advanced blur options, CleanShot & source URL export
 
 let canvas;
 let currentTool = "select";
@@ -6,7 +6,11 @@ let currentColor = "#ef4444";
 let currentStrokeWidth = 4;
 let stepCounter = 1;
 let bgImageObject = null;
-let rawOriginalImage = null; // Store pure underlying HTMLImageElement for blur sampling
+let rawOriginalImage = null; // Pure underlying HTMLImageElement for sampling
+let sourcePageUrl = ""; // Saved source url
+
+// Zoom Level
+let zoomLevel = 1.0;
 
 // History stacks for Undo / Redo
 let canvasHistory = [];
@@ -19,7 +23,7 @@ let currentRadius = 0;
 let currentShadow = 0;
 let currentBackground = "transparent";
 
-// Initialize Fabric Canvas & i18n
+// Initialize Fabric Canvas, i18n, and Controls
 window.addEventListener("DOMContentLoaded", async () => {
   initI18n();
 
@@ -29,7 +33,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Load screenshot from storage
-  chrome.storage.local.get(["pendingScreenshot"], (result) => {
+  chrome.storage.local.get(["pendingScreenshot", "pendingSourceUrl"], (result) => {
+    if (result.pendingSourceUrl) {
+      sourcePageUrl = result.pendingSourceUrl;
+    }
     if (result.pendingScreenshot) {
       loadImage(result.pendingScreenshot);
     } else {
@@ -38,9 +45,10 @@ window.addEventListener("DOMContentLoaded", async () => {
   });
 
   setupToolbar();
+  setupZoomControls();
   setupCanvasEvents();
   setupCleanShotControls();
-  setupExportAndOCR();
+  setupExport();
 });
 
 function loadImage(dataUrl) {
@@ -111,6 +119,35 @@ function redo() {
   }
 }
 
+// Zoom Controls
+function setupZoomControls() {
+  const btnZoomIn = document.getElementById("btn-zoom-in");
+  const btnZoomOut = document.getElementById("btn-zoom-out");
+  const btnZoomReset = document.getElementById("btn-zoom-reset");
+  const zoomText = document.getElementById("zoom-level-text");
+  const containerOuter = document.getElementById("canvas-container-outer");
+
+  function applyZoom(newZoom) {
+    zoomLevel = Math.min(3.0, Math.max(0.2, newZoom));
+    zoomText.textContent = `${Math.round(zoomLevel * 100)}%`;
+    containerOuter.style.transform = `scale(${zoomLevel})`;
+  }
+
+  btnZoomIn.addEventListener("click", () => applyZoom(zoomLevel + 0.15));
+  btnZoomOut.addEventListener("click", () => applyZoom(zoomLevel - 0.15));
+  btnZoomReset.addEventListener("click", () => applyZoom(1.0));
+
+  // Mouse wheel zoom when holding Ctrl or over viewport
+  const viewport = document.getElementById("canvas-viewport");
+  viewport.addEventListener("wheel", (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.1 : -0.1;
+      applyZoom(zoomLevel + delta);
+    }
+  }, { passive: false });
+}
+
 // Toolbar Setup
 function setupToolbar() {
   const toolButtons = document.querySelectorAll(".tool-btn[data-tool]");
@@ -174,6 +211,10 @@ function setupToolbar() {
         canvas.renderAll();
         saveState();
       }
+    } else if (e.key === "+" || e.key === "=") {
+      document.getElementById("btn-zoom-in").click();
+    } else if (e.key === "-") {
+      document.getElementById("btn-zoom-out").click();
     } else {
       const keyMap = {
         v: "select",
@@ -205,8 +246,8 @@ function updateDrawingMode() {
   });
 }
 
-// Pixelate / Heavy Blur Generator using Offscreen Canvas
-function createPixelatedDataUrl(x, y, width, height) {
+// Generate Anonymization / Blur Element based on Type and Strength
+function createBlurDataUrl(x, y, width, height, blurType, blurStrength) {
   if (!rawOriginalImage || width <= 0 || height <= 0) return null;
 
   const tempCanvas = document.createElement("canvas");
@@ -214,9 +255,35 @@ function createPixelatedDataUrl(x, y, width, height) {
   tempCanvas.height = height;
   const tempCtx = tempCanvas.getContext("2d");
 
-  // Step 1: Draw crop to mini canvas (downscale to 8% size for heavy pixelation/censor)
+  // Solid blackout
+  if (blurType === "blackout") {
+    tempCtx.fillStyle = "#0f172a";
+    tempCtx.fillRect(0, 0, width, height);
+    return tempCanvas.toDataURL();
+  }
+
+  // Smooth Gaussian-like blur
+  if (blurType === "smooth") {
+    let blurPx = 8;
+    if (blurStrength === "low") blurPx = 5;
+    if (blurStrength === "high") blurPx = 18;
+
+    tempCtx.filter = `blur(${blurPx}px)`;
+    // Draw enlarged to prevent clear edges
+    tempCtx.drawImage(
+      rawOriginalImage,
+      Math.max(0, x - blurPx), Math.max(0, y - blurPx), width + blurPx * 2, height + blurPx * 2,
+      -blurPx, -blurPx, width + blurPx * 2, height + blurPx * 2
+    );
+    return tempCanvas.toDataURL();
+  }
+
+  // Pixelate (Default)
+  let scale = 0.08;
+  if (blurStrength === "low") scale = 0.16;
+  if (blurStrength === "high") scale = 0.04;
+
   const miniCanvas = document.createElement("canvas");
-  const scale = 0.08; // Heavy anonymization
   const miniW = Math.max(2, Math.floor(width * scale));
   const miniH = Math.max(2, Math.floor(height * scale));
   miniCanvas.width = miniW;
@@ -229,7 +296,6 @@ function createPixelatedDataUrl(x, y, width, height) {
     0, 0, miniW, miniH
   );
 
-  // Step 2: Draw mini back to full size without smoothing (pixelate effect)
   tempCtx.imageSmoothingEnabled = false;
   tempCtx.drawImage(miniCanvas, 0, 0, miniW, miniH, 0, 0, width, height);
 
@@ -298,7 +364,6 @@ function setupCanvasEvents() {
       });
       canvas.add(activeShape);
     } else if (currentTool === "blur") {
-      // Temporary guide box while dragging
       activeShape = new fabric.Rect({
         left: origX,
         top: origY,
@@ -372,10 +437,13 @@ function setupCanvasEvents() {
       const blurHeight = Math.round(activeShape.height);
       canvas.remove(activeShape);
 
+      const blurType = document.getElementById("sel-blur-type").value;
+      const blurStrength = document.getElementById("sel-blur-strength").value;
+
       if (blurWidth > 4 && blurHeight > 4) {
-        const pixelDataUrl = createPixelatedDataUrl(blurLeft, blurTop, blurWidth, blurHeight);
-        if (pixelDataUrl) {
-          fabric.Image.fromURL(pixelDataUrl, (blurImg) => {
+        const blurDataUrl = createBlurDataUrl(blurLeft, blurTop, blurWidth, blurHeight, blurType, blurStrength);
+        if (blurDataUrl) {
+          fabric.Image.fromURL(blurDataUrl, (blurImg) => {
             blurImg.set({
               left: blurLeft,
               top: blurTop,
@@ -559,27 +627,8 @@ function generateExportCanvas() {
   });
 }
 
-// OCR Implementation using Chrome / Browser Native Shape Detection API or fallback
-async function performOcr(canvasSource) {
-  // Option 1: Modern Chromium TextDetector API (Fast, built-in, no external worker/network dependencies)
-  if ("TextDetector" in window) {
-    try {
-      const detector = new window.TextDetector();
-      const detectedTexts = await detector.detect(canvasSource);
-      if (detectedTexts && detectedTexts.length > 0) {
-        return detectedTexts.map(item => item.rawValue).join("\n");
-      }
-    } catch (err) {
-      console.warn("Native TextDetector failed, trying worker:", err);
-    }
-  }
-
-  // Option 2: Fallback to lightweight pure-JS OCR or helpful prompt
-  return null;
-}
-
-// Export & OCR Setup
-function setupExportAndOCR() {
+// Export Setup
+function setupExport() {
   const btnDownload = document.getElementById("btn-download-canvas");
   const selFormat = document.getElementById("export-format");
   const btnCopy = document.getElementById("btn-copy-canvas");
@@ -590,10 +639,19 @@ function setupExportAndOCR() {
     const mime = format === "jpeg" ? "image/jpeg" : format === "webp" ? "image/webp" : "image/png";
     const dataUrl = exportCanvas.toDataURL(mime, 0.95);
 
+    let domain = "website";
+    try {
+      if (sourcePageUrl) {
+        domain = new URL(sourcePageUrl).hostname.replace(/^www\./, "");
+      }
+    } catch(e){}
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+
     chrome.runtime.sendMessage({
       action: "downloadImage",
       dataUrl: dataUrl,
-      filename: `screenshot-pro-${Date.now()}.${format}`
+      filename: `screenshot_${domain}_${timestamp}.${format}`,
+      sourceUrl: sourcePageUrl
     });
   });
 
@@ -611,44 +669,5 @@ function setupExportAndOCR() {
         console.error("Clipboard write error:", err);
       }
     }, "image/png");
-  });
-
-  // OCR Modal
-  const btnOcr = document.getElementById("btn-ocr");
-  const modalOcr = document.getElementById("ocr-modal");
-  const btnCloseOcr = document.getElementById("btn-close-ocr");
-  const btnCopyOcr = document.getElementById("btn-copy-ocr");
-  const ocrText = document.getElementById("ocr-result-text");
-
-  btnOcr.addEventListener("click", async () => {
-    modalOcr.classList.remove("hidden");
-    ocrText.value = t("ocr_processing");
-
-    try {
-      const exportCanvas = await generateExportCanvas();
-
-      // Check for Chromium Shape Detection (TextDetector)
-      if ("TextDetector" in window) {
-        const detector = new window.TextDetector();
-        const detected = await detector.detect(exportCanvas);
-        if (detected && detected.length > 0) {
-          ocrText.value = detected.map(d => d.rawValue).join("\n");
-          return;
-        }
-      }
-
-      // OCR Fallback - Canvas extraction
-      ocrText.value = "Chrome TextDetector API is enabled via chrome://flags/#enable-experimental-web-platform-features for native offline OCR, or select text on the webpage directly.";
-    } catch (err) {
-      console.error("OCR error:", err);
-      ocrText.value = "OCR error: " + err.message;
-    }
-  });
-
-  btnCloseOcr.addEventListener("click", () => modalOcr.classList.add("hidden"));
-  btnCopyOcr.addEventListener("click", async () => {
-    await navigator.clipboard.writeText(ocrText.value);
-    btnCopyOcr.textContent = t("copied");
-    setTimeout(() => { btnCopyOcr.textContent = t("ocr_copy_btn"); }, 1500);
   });
 }

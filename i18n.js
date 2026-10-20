@@ -41,14 +41,30 @@ const translations = {
     tool_circle: "Circle (C)",
     tool_text: "Text (T)",
     tool_highlighter: "Highlighter (H)",
-    tool_blur: "Blur / Pixelate Censorship (B)",
+    tool_blur: "Blur & Anonymize (B)",
     tool_step: "Numbered Step Bubbles 1, 2, 3... (S)",
-    tool_crop: "Crop Canvas",
     color_title: "Color",
     stroke_width_title: "Line Thickness",
-    ocr_btn: "OCR Text",
     copy_btn: "Copy",
     download_btn: "Download",
+
+    // Zoom Controls
+    zoom_in_title: "Zoom In (+)",
+    zoom_out_title: "Zoom Out (-)",
+    zoom_fit_title: "Fit to Screen (100%)",
+
+    // Blur Options Panel
+    blur_options_title: "Blur Options",
+    blur_type_label: "Blur Type",
+    blur_type_pixel: "Pixelate",
+    blur_type_smooth: "Smooth Blur",
+    blur_type_blackout: "Solid Blackout",
+    blur_strength_label: "Strength",
+    blur_strength_low: "Low",
+    blur_strength_med: "Medium",
+    blur_strength_high: "High",
+
+    // CleanShot
     panel_cleanshot_title: "CleanShot Canvas & Backdrop",
     panel_cleanshot_desc: "Add beautiful padding, drop-shadow, and gradients behind your image.",
     padding_label: "Padding",
@@ -65,12 +81,7 @@ const translations = {
     shortcut_blur: "Blur / Censor",
     shortcut_step: "Step Bubble",
     shortcut_delete: "Delete Selected",
-    shortcut_undo: "Undo",
-    ocr_modal_title: "OCR Text Recognition",
-    ocr_processing: "Extracting text from image via OCR... Please wait...",
-    ocr_copy_btn: "Copy Text",
-    ocr_no_text: "No text found in image.",
-    ocr_no_library: "OCR engine could not be initialized."
+    shortcut_undo: "Undo"
   },
   da: {
     // Popup
@@ -112,14 +123,30 @@ const translations = {
     tool_circle: "Cirkel (C)",
     tool_text: "Tekst (T)",
     tool_highlighter: "Overstregningstusch (H)",
-    tool_blur: "Sløring / Censurering (B)",
+    tool_blur: "Sløring & Censur (B)",
     tool_step: "Nummererede trinboblere 1, 2, 3... (S)",
-    tool_crop: "Beskær Lærred",
     color_title: "Farve",
     stroke_width_title: "Stregtykkelse",
-    ocr_btn: "OCR Tekst",
     copy_btn: "Kopiér",
     download_btn: "Download",
+
+    // Zoom Controls
+    zoom_in_title: "Zoom Ind (+)",
+    zoom_out_title: "Zoom Ud (-)",
+    zoom_fit_title: "Tilpas Skærm (100%)",
+
+    // Blur Options Panel
+    blur_options_title: "Sløringsindstillinger",
+    blur_type_label: "Sløringstype",
+    blur_type_pixel: "Pixelering (Pixelate)",
+    blur_type_smooth: "Blød Sløring (Smooth Blur)",
+    blur_type_blackout: "Sort Censur (Blackout)",
+    blur_strength_label: "Styrke",
+    blur_strength_low: "Lav",
+    blur_strength_med: "Mellem",
+    blur_strength_high: "Høj (Ekstra anonymiseret)",
+
+    // CleanShot
     panel_cleanshot_title: "CleanShot Lærred & Baggrund",
     panel_cleanshot_desc: "Tilføj smuk padding, skygge og gradient bag dit billede.",
     padding_label: "Polstring (Padding)",
@@ -136,12 +163,7 @@ const translations = {
     shortcut_blur: "Sløring / Censor",
     shortcut_step: "Trin-boble",
     shortcut_delete: "Slet valgte",
-    shortcut_undo: "Fortryd",
-    ocr_modal_title: "OCR Tekstgenkendelse",
-    ocr_processing: "Behandler tekst i billedet med OCR... Vent et øjeblik...",
-    ocr_copy_btn: "Kopiér Tekst",
-    ocr_no_text: "Ingen tekst fundet i billedet.",
-    ocr_no_library: "OCR motor kunne ikke initialiseres."
+    shortcut_undo: "Fortryd"
   }
 };
 
@@ -149,7 +171,7 @@ let currentLang = "en"; // Default is English!
 
 async function initI18n(callback) {
   const res = await new Promise(resolve => chrome.storage.local.get(["appLanguage"], resolve));
-  currentLang = res.appLanguage || "en"; // Default English
+  currentLang = res.appLanguage || "en";
   applyTranslations();
   if (callback) callback(currentLang);
 }

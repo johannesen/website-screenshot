@@ -87,15 +87,25 @@
         ctx.drawImage(img, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
         const croppedDataUrl = canvas.toDataURL("image/png");
 
+        const sourceUrl = window.location.href;
+        let domain = "element";
+        try { domain = window.location.hostname.replace(/^www\./, ""); } catch(e){}
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+
         chrome.storage.local.get(["defaultFlow"], (res) => {
           if (res.defaultFlow === "preview") {
             chrome.runtime.sendMessage({
               action: "downloadImage",
               dataUrl: croppedDataUrl,
-              filename: `element-screenshot-${Date.now()}.png`
+              filename: `screenshot_${domain}_${timestamp}.png`,
+              sourceUrl: sourceUrl
             });
           } else {
-            chrome.runtime.sendMessage({ action: "openEditor", dataUrl: croppedDataUrl });
+            chrome.runtime.sendMessage({
+              action: "openEditor",
+              dataUrl: croppedDataUrl,
+              sourceUrl: sourceUrl
+            });
           }
         });
       };

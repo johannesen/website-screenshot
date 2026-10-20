@@ -1,20 +1,36 @@
 // background.js - Service Worker handling captures, editor opening, downloads & shortcuts
 
+function sanitizeDomain(url) {
+  try {
+    if (!url) return "website";
+    const parsed = new URL(url);
+    let host = parsed.hostname.replace(/^www\./, "");
+    return host.replace(/[^a-zA-Z0-9.-]/g, "_") || "website";
+  } catch (e) {
+    return "website";
+  }
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "captureVisibleTab") {
     chrome.tabs.captureVisibleTab(null, { format: "png" }, (dataUrl) => {
       if (chrome.runtime.lastError) {
         sendResponse({ success: false, error: chrome.runtime.lastError.message });
       } else {
-        sendResponse({ success: true, dataUrl });
+        // Also supply the tab url/domain for filename naming
+        const tabUrl = sender.tab ? sender.tab.url : message.url;
+        sendResponse({ success: true, dataUrl, url: tabUrl });
       }
     });
     return true;
   }
 
   if (message.action === "openEditor") {
-    // Save image data to local storage and open editor tab
-    chrome.storage.local.set({ pendingScreenshot: message.dataUrl }, () => {
+    // Save image data and source URL in local storage
+    chrome.storage.local.set({
+      pendingScreenshot: message.dataUrl,
+      pendingSourceUrl: message.sourceUrl || (sender.tab ? sender.tab.url : "")
+    }, () => {
       chrome.tabs.create({ url: chrome.runtime.getURL("editor/editor.html") });
       sendResponse({ success: true });
     });
@@ -22,7 +38,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.action === "downloadImage") {
-    const filename = message.filename || `screenshot-${Date.now()}.png`;
+    let filename = message.filename;
+    if (!filename) {
+      const domain = sanitizeDomain(message.sourceUrl);
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      filename = `screenshot_${domain}_${timestamp}.png`;
+    }
     chrome.downloads.download({
       url: message.dataUrl,
       filename: filename,
@@ -62,7 +83,10 @@ chrome.commands.onCommand.addListener(async (command) => {
   if (command === "capture-visible") {
     chrome.tabs.captureVisibleTab(null, { format: "png" }, (dataUrl) => {
       if (dataUrl) {
-        chrome.storage.local.set({ pendingScreenshot: dataUrl }, () => {
+        chrome.storage.local.set({
+          pendingScreenshot: dataUrl,
+          pendingSourceUrl: tab.url
+        }, () => {
           chrome.tabs.create({ url: chrome.runtime.getURL("editor/editor.html") });
         });
       }

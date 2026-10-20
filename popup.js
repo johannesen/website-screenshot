@@ -70,10 +70,13 @@ function isRestrictedUrl(url) {
   );
 }
 
-async function handleCapturedImage(dataUrl) {
+let currentSourceUrl = "";
+
+async function handleCapturedImage(dataUrl, sourceUrl) {
+  currentSourceUrl = sourceUrl || "";
   const flow = selFlow.value;
   if (flow === "editor") {
-    chrome.runtime.sendMessage({ action: "openEditor", dataUrl });
+    chrome.runtime.sendMessage({ action: "openEditor", dataUrl, sourceUrl: currentSourceUrl });
     window.close();
   } else {
     showPreview(dataUrl);
@@ -88,6 +91,7 @@ btnVisible.addEventListener("click", async () => {
     return;
   }
 
+  currentSourceUrl = tab ? tab.url : "";
   hidePreview();
 
   if (chkTimer.checked) {
@@ -113,7 +117,7 @@ function triggerCaptureVisible() {
   chrome.runtime.sendMessage({ action: "captureVisibleTab" }, (response) => {
     hideStatus();
     if (response && response.success) {
-      handleCapturedImage(response.dataUrl);
+      handleCapturedImage(response.dataUrl, currentSourceUrl);
     } else {
       alert(t("capture_error") + (response ? response.error : "Unknown error"));
     }
@@ -205,17 +209,25 @@ btnFullPage.addEventListener("click", async () => {
 // Open in Editor
 btnOpenEditor.addEventListener("click", () => {
   if (!currentDataUrl) return;
-  chrome.runtime.sendMessage({ action: "openEditor", dataUrl: currentDataUrl });
+  chrome.runtime.sendMessage({ action: "openEditor", dataUrl: currentDataUrl, sourceUrl: currentSourceUrl });
   window.close();
 });
 
 // Download button action
 btnDownload.addEventListener("click", () => {
   if (!currentDataUrl) return;
+  let domain = "website";
+  try {
+    if (currentSourceUrl) {
+      domain = new URL(currentSourceUrl).hostname.replace(/^www\./, "");
+    }
+  } catch(e){}
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
   chrome.runtime.sendMessage({
     action: "downloadImage",
     dataUrl: currentDataUrl,
-    filename: `screenshot-visible-${Date.now()}.png`
+    filename: `screenshot_${domain}_${timestamp}.png`,
+    sourceUrl: currentSourceUrl
   });
 });
 
