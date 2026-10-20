@@ -1,4 +1,4 @@
-// popup.js - Upgraded popup with timer, element picker, and direct editor integration
+// popup.js - Upgraded popup with i18n language support, timer, element picker, and editor flow
 
 let currentDataUrl = null;
 
@@ -8,6 +8,7 @@ const btnElement = document.getElementById("btn-element");
 const btnFullPage = document.getElementById("btn-fullpage");
 const chkTimer = document.getElementById("chk-timer");
 const selFlow = document.getElementById("sel-flow");
+const selLang = document.getElementById("sel-lang");
 
 const statusMessage = document.getElementById("status-message");
 const statusText = document.getElementById("status-text");
@@ -17,6 +18,15 @@ const btnClosePreview = document.getElementById("btn-close-preview");
 const btnOpenEditor = document.getElementById("btn-open-editor");
 const btnDownload = document.getElementById("btn-download");
 const btnCopy = document.getElementById("btn-copy");
+
+// Initialize translations
+initI18n((lang) => {
+  selLang.value = lang;
+});
+
+selLang.addEventListener("change", () => {
+  setLanguage(selLang.value);
+});
 
 // Load flow preference
 chrome.storage.local.get(["defaultFlow"], (res) => {
@@ -74,27 +84,27 @@ async function handleCapturedImage(dataUrl) {
 btnVisible.addEventListener("click", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab && isRestrictedUrl(tab.url)) {
-    alert("Chrome tillader ikke udvidelser at tage screenshots af Chrome Web Store eller interne browsersider (chrome://) af sikkerhedsmæssige årsager. Prøv venligst på en almindelig webside.");
+    alert(t("restricted_warning"));
     return;
   }
 
   hidePreview();
 
   if (chkTimer.checked) {
-    showStatus("Optager om 3 sekunder...");
+    showStatus(`${t("countdown_prefix")} 3 ${t("countdown_seconds")}`);
     let count = 3;
     const interval = setInterval(() => {
       count--;
       if (count > 0) {
-        showStatus(`Optager om ${count} sekunder...`);
+        showStatus(`${t("countdown_prefix")} ${count} ${t("countdown_seconds")}`);
       } else {
         clearInterval(interval);
-        showStatus("Tager screenshot...");
+        showStatus(t("working"));
         triggerCaptureVisible();
       }
     }, 1000);
   } else {
-    showStatus("Tager screenshot...");
+    showStatus(t("working"));
     triggerCaptureVisible();
   }
 });
@@ -105,7 +115,7 @@ function triggerCaptureVisible() {
     if (response && response.success) {
       handleCapturedImage(response.dataUrl);
     } else {
-      alert("Fejl ved optagelse: " + (response ? response.error : "Ukendt fejl"));
+      alert(t("capture_error") + (response ? response.error : "Unknown error"));
     }
   });
 }
@@ -116,7 +126,7 @@ btnCrop.addEventListener("click", async () => {
   if (!tab || !tab.id) return;
 
   if (isRestrictedUrl(tab.url)) {
-    alert("Chrome tillader ikke udvidelser at køre scripts på Chrome Web Store eller interne browsersider af sikkerhedsmæssige årsager. Prøv venligst på en almindelig webside.");
+    alert(t("restricted_warning"));
     return;
   }
 
@@ -133,8 +143,8 @@ btnCrop.addEventListener("click", async () => {
 
     window.close();
   } catch (err) {
-    console.error("Kunne ikke starte områdevalg:", err);
-    alert("Kunne ikke starte på denne side: " + err.message);
+    console.error("Could not start area crop:", err);
+    alert(t("capture_error") + err.message);
   }
 });
 
@@ -144,7 +154,7 @@ btnElement.addEventListener("click", async () => {
   if (!tab || !tab.id) return;
 
   if (isRestrictedUrl(tab.url)) {
-    alert("Chrome tillader ikke scripts på Chrome Web Store eller interne browsersider.");
+    alert(t("restricted_warning"));
     return;
   }
 
@@ -161,8 +171,8 @@ btnElement.addEventListener("click", async () => {
 
     window.close();
   } catch (err) {
-    console.error("Kunne ikke starte element-vælger:", err);
-    alert("Fejl: " + err.message);
+    console.error("Could not start element picker:", err);
+    alert(t("capture_error") + err.message);
   }
 });
 
@@ -172,11 +182,11 @@ btnFullPage.addEventListener("click", async () => {
   if (!tab || !tab.id) return;
 
   if (isRestrictedUrl(tab.url)) {
-    alert("Chrome tillader ikke udvidelser at køre scripts på Chrome Web Store eller interne browsersider af sikkerhedsmæssige årsager.");
+    alert(t("restricted_warning"));
     return;
   }
 
-  showStatus("Forbereder fuld side optagelse...");
+  showStatus(t("working"));
 
   try {
     await chrome.scripting.executeScript({
@@ -187,8 +197,8 @@ btnFullPage.addEventListener("click", async () => {
     window.close();
   } catch (err) {
     hideStatus();
-    console.error("Kunne ikke starte fuld side:", err);
-    alert("Kunne ikke køre på denne side: " + err.message);
+    console.error("Could not start fullpage capture:", err);
+    alert(t("capture_error") + err.message);
   }
 });
 
@@ -219,13 +229,12 @@ btnCopy.addEventListener("click", async () => {
       new ClipboardItem({ [blob.type]: blob })
     ]);
     const origText = btnCopy.textContent;
-    btnCopy.textContent = "Kopieret!";
+    btnCopy.textContent = t("copied");
     setTimeout(() => {
       btnCopy.textContent = origText;
     }, 1500);
   } catch (err) {
-    console.error("Fejl ved kopiering:", err);
-    alert("Kunne ikke kopiere til udklipsholder.");
+    console.error("Clipboard error:", err);
   }
 });
 

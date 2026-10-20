@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="da">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,16 +14,16 @@
           <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
           <circle cx="12" cy="13" r="4"></circle>
         </svg>
-        <h1>Website Screenshot Pro</h1>
+        <h1 data-i18n="app_title">Website Screenshot Pro</h1>
       </div>
       <div class="header-options">
-        <label class="timer-toggle" title="3 sekunders forsinkelse før optagelse (godt til dropdowns/menuer)">
+        <label class="timer-toggle" data-i18n-title="timer_hint" title="3-second countdown before capture">
           <input type="checkbox" id="chk-timer">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
-          <span>3s timer</span>
+          <span data-i18n="timer_3s">3s timer</span>
         </label>
       </div>
     </header>
@@ -38,7 +38,7 @@
           </svg>
         </div>
         <div class="btn-content">
-          <span class="btn-title">Synligt område</span>
+          <span class="btn-title" data-i18n="btn_visible">Visible Area</span>
           <span class="btn-shortcut">Alt+Shift+V</span>
         </div>
       </button>
@@ -51,7 +51,7 @@
           </svg>
         </div>
         <div class="btn-content">
-          <span class="btn-title">Valgt område</span>
+          <span class="btn-title" data-i18n="btn_crop">Selected Area</span>
           <span class="btn-shortcut">Alt+Shift+S</span>
         </div>
       </button>
@@ -67,8 +67,8 @@
           </svg>
         </div>
         <div class="btn-content">
-          <span class="btn-title">Element-vælger</span>
-          <span class="btn-desc">Klik på et DOM element</span>
+          <span class="btn-title" data-i18n="btn_element">Element Picker</span>
+          <span class="btn-desc" data-i18n="btn_element_desc">Click on any DOM element</span>
         </div>
       </button>
 
@@ -80,19 +80,27 @@
           </svg>
         </div>
         <div class="btn-content">
-          <span class="btn-title">Fuld side</span>
+          <span class="btn-title" data-i18n="btn_fullpage">Full Page</span>
           <span class="btn-shortcut">Alt+Shift+F</span>
         </div>
       </button>
     </div>
 
-    <!-- Mode preference setting -->
+    <!-- Settings Bar -->
     <div class="settings-bar">
-      <label class="setting-item" title="Vælg hvad der skal ske, når et screenshot tages">
-        <span>Standard handling:</span>
+      <label class="setting-item">
+        <span data-i18n="default_action">Default action:</span>
         <select id="sel-flow">
-          <option value="editor" selected>Åbn i Editor</option>
-          <option value="preview">Hurtigvisning i Popup</option>
+          <option value="editor" data-i18n="action_editor">Open in Editor</option>
+          <option value="preview" data-i18n="action_preview">Quick Preview in Popup</option>
+        </select>
+      </label>
+
+      <label class="setting-item" style="margin-top: 8px;">
+        <span data-i18n="language_label">Language:</span>
+        <select id="sel-lang">
+          <option value="en">English</option>
+          <option value="da">Dansk</option>
         </select>
       </label>
     </div>
@@ -100,25 +108,25 @@
     <!-- Status message -->
     <div id="status-message" class="status-message hidden">
       <div class="spinner"></div>
-      <span id="status-text">Arbejder...</span>
+      <span id="status-text">Working...</span>
     </div>
 
     <!-- Preview Modal / Section -->
     <div id="preview-section" class="preview-section hidden">
       <div class="preview-header">
-        <span>Hurtigvisning</span>
-        <button id="btn-close-preview" class="icon-close" title="Luk preview">&times;</button>
+        <span data-i18n="quick_preview">Quick Preview</span>
+        <button id="btn-close-preview" class="icon-close" title="Close">&times;</button>
       </div>
       <div class="preview-container">
         <img id="preview-image" src="" alt="Screenshot preview">
       </div>
       <div class="preview-actions">
-        <button id="btn-open-editor" class="primary-btn" title="Åbn i fuld billededitor">
+        <button id="btn-open-editor" class="primary-btn">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 20h9"></path>
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
           </svg>
-          Rediger
+          <span data-i18n="btn_edit">Edit</span>
         </button>
         <button id="btn-download" class="secondary-btn">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
@@ -126,19 +134,20 @@
             <polyline points="7 10 12 15 17 10"></polyline>
             <line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
-          Download
+          <span data-i18n="btn_download">Download</span>
         </button>
         <button id="btn-copy" class="secondary-btn">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
           </svg>
-          Kopiér
+          <span data-i18n="btn_copy">Copy</span>
         </button>
       </div>
     </div>
   </div>
 
+  <script src="i18n.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

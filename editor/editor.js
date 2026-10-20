@@ -1,4 +1,4 @@
-// editor/editor.js - Fabric.js vector image editor with annotations, CleanShot styling & OCR
+// editor/editor.js - Fabric.js vector image editor with genuine pixelated blur, CleanShot styling, i18n & OCR
 
 let canvas;
 let currentTool = "select";
@@ -6,6 +6,7 @@ let currentColor = "#ef4444";
 let currentStrokeWidth = 4;
 let stepCounter = 1;
 let bgImageObject = null;
+let rawOriginalImage = null; // Store pure underlying HTMLImageElement for blur sampling
 
 // History stacks for Undo / Redo
 let canvasHistory = [];
@@ -18,8 +19,10 @@ let currentRadius = 0;
 let currentShadow = 0;
 let currentBackground = "transparent";
 
-// Initialize Fabric Canvas
+// Initialize Fabric Canvas & i18n
 window.addEventListener("DOMContentLoaded", async () => {
+  initI18n();
+
   canvas = new fabric.Canvas("main-canvas", {
     selection: true,
     preserveObjectStacking: true
@@ -41,27 +44,34 @@ window.addEventListener("DOMContentLoaded", async () => {
 });
 
 function loadImage(dataUrl) {
-  fabric.Image.fromURL(dataUrl, (img) => {
-    bgImageObject = img;
-    img.set({
-      selectable: false,
-      evented: false
+  const htmlImg = new Image();
+  htmlImg.crossOrigin = "anonymous";
+  htmlImg.onload = () => {
+    rawOriginalImage = htmlImg;
+
+    fabric.Image.fromURL(dataUrl, (img) => {
+      bgImageObject = img;
+      img.set({
+        selectable: false,
+        evented: false
+      });
+
+      canvas.setWidth(img.width);
+      canvas.setHeight(img.height);
+      canvas.add(img);
+      canvas.sendToBack(img);
+      canvas.renderAll();
+
+      saveState();
     });
-
-    canvas.setWidth(img.width);
-    canvas.setHeight(img.height);
-    canvas.add(img);
-    canvas.sendToBack(img);
-    canvas.renderAll();
-
-    saveState();
-  });
+  };
+  htmlImg.src = dataUrl;
 }
 
 // History Management
 function saveState() {
   if (isUpdatingHistory) return;
-  const json = JSON.stringify(canvas.toJSON());
+  const json = JSON.stringify(canvas.toJSON(["isBlurBlock", "blurLeft", "blurTop", "blurWidth", "blurHeight"]));
   if (historyIndex < canvasHistory.length - 1) {
     canvasHistory = canvasHistory.slice(0, historyIndex + 1);
   }
@@ -71,8 +81,10 @@ function saveState() {
 }
 
 function updateHistoryButtons() {
-  document.getElementById("btn-undo").disabled = historyIndex <= 0;
-  document.getElementById("btn-redo").disabled = historyIndex >= canvasHistory.length - 1;
+  const undoBtn = document.getElementById("btn-undo");
+  const redoBtn = document.getElementById("btn-redo");
+  if (undoBtn) undoBtn.disabled = historyIndex <= 0;
+  if (redoBtn) redoBtn.disabled = historyIndex >= canvasHistory.length - 1;
 }
 
 function undo() {
@@ -118,7 +130,7 @@ function setupToolbar() {
     if (active) {
       if (active.type === "i-text" || active.type === "text") {
         active.set("fill", currentColor);
-      } else {
+      } else if (!active.isBlurBlock) {
         active.set("stroke", currentColor);
       }
       canvas.renderAll();
@@ -130,7 +142,7 @@ function setupToolbar() {
   strokeSelect.addEventListener("change", (e) => {
     currentStrokeWidth = parseInt(e.target.value, 10);
     const active = canvas.getActiveObject();
-    if (active && active.stroke) {
+    if (active && active.stroke && !active.isBlurBlock) {
       active.set("strokeWidth", currentStrokeWidth);
       canvas.renderAll();
       saveState();
@@ -191,6 +203,37 @@ function updateDrawingMode() {
       obj.evented = currentTool === "select";
     }
   });
+}
+
+// Pixelate / Heavy Blur Generator using Offscreen Canvas
+function createPixelatedDataUrl(x, y, width, height) {
+  if (!rawOriginalImage || width <= 0 || height <= 0) return null;
+
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = width;
+  tempCanvas.height = height;
+  const tempCtx = tempCanvas.getContext("2d");
+
+  // Step 1: Draw crop to mini canvas (downscale to 8% size for heavy pixelation/censor)
+  const miniCanvas = document.createElement("canvas");
+  const scale = 0.08; // Heavy anonymization
+  const miniW = Math.max(2, Math.floor(width * scale));
+  const miniH = Math.max(2, Math.floor(height * scale));
+  miniCanvas.width = miniW;
+  miniCanvas.height = miniH;
+  const miniCtx = miniCanvas.getContext("2d");
+
+  miniCtx.drawImage(
+    rawOriginalImage,
+    x, y, width, height,
+    0, 0, miniW, miniH
+  );
+
+  // Step 2: Draw mini back to full size without smoothing (pixelate effect)
+  tempCtx.imageSmoothingEnabled = false;
+  tempCtx.drawImage(miniCanvas, 0, 0, miniW, miniH, 0, 0, width, height);
+
+  return tempCanvas.toDataURL();
 }
 
 // Canvas Drawing Events
@@ -255,33 +298,33 @@ function setupCanvasEvents() {
       });
       canvas.add(activeShape);
     } else if (currentTool === "blur") {
-      // Pixelated censorship block
+      // Temporary guide box while dragging
       activeShape = new fabric.Rect({
         left: origX,
         top: origY,
         width: 0,
         height: 0,
-        fill: "rgba(15, 23, 42, 0.95)",
-        stroke: "rgba(255, 255, 255, 0.3)",
-        strokeWidth: 1
+        fill: "rgba(59, 130, 246, 0.2)",
+        stroke: "#3b82f6",
+        strokeDashArray: [4, 4],
+        strokeWidth: 1.5
       });
       canvas.add(activeShape);
     } else if (currentTool === "text") {
       isDrawing = false;
-      const text = new fabric.IText("Dobbeltklik for at redigere", {
+      const text = new fabric.IText(t("shortcut_text"), {
         left: origX,
         top: origY,
         fontSize: 22,
         fill: currentColor,
         fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif",
-        backgroundColor: "rgba(0, 0, 0, 0.4)",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
         padding: 6
       });
       canvas.add(text);
       canvas.setActiveObject(text);
       text.enterEditing();
       saveState();
-      // Reset back to select mode
       document.querySelector('.tool-btn[data-tool="select"]').click();
     } else if (currentTool === "step") {
       isDrawing = false;
@@ -322,8 +365,41 @@ function setupCanvasEvents() {
     if (!isDrawing) return;
     isDrawing = false;
 
+    if (currentTool === "blur" && activeShape) {
+      const blurLeft = Math.round(activeShape.left);
+      const blurTop = Math.round(activeShape.top);
+      const blurWidth = Math.round(activeShape.width);
+      const blurHeight = Math.round(activeShape.height);
+      canvas.remove(activeShape);
+
+      if (blurWidth > 4 && blurHeight > 4) {
+        const pixelDataUrl = createPixelatedDataUrl(blurLeft, blurTop, blurWidth, blurHeight);
+        if (pixelDataUrl) {
+          fabric.Image.fromURL(pixelDataUrl, (blurImg) => {
+            blurImg.set({
+              left: blurLeft,
+              top: blurTop,
+              selectable: true,
+              evented: true,
+              isBlurBlock: true,
+              cornerColor: "#3b82f6",
+              transparentCorners: false,
+              stroke: "rgba(0,0,0,0.2)",
+              strokeWidth: 1
+            });
+            canvas.add(blurImg);
+            canvas.setActiveObject(blurImg);
+            canvas.renderAll();
+            saveState();
+          });
+        }
+      }
+      activeShape = null;
+      document.querySelector('.tool-btn[data-tool="select"]').click();
+      return;
+    }
+
     if (currentTool === "arrow" && activeShape) {
-      // Add arrowhead
       const x1 = activeShape.x1;
       const y1 = activeShape.y1;
       const x2 = activeShape.x2;
@@ -416,7 +492,7 @@ function setupCleanShotControls() {
 
   shadowSlider.addEventListener("input", (e) => {
     currentShadow = parseInt(e.target.value, 10);
-    shadowVal.textContent = currentShadow > 0 ? `${currentShadow}px` : "Ingen";
+    shadowVal.textContent = currentShadow > 0 ? `${currentShadow}px` : t("shadow_none");
     outer.style.boxShadow = currentShadow > 0 ? `0 ${currentShadow / 2}px ${currentShadow}px rgba(0,0,0,0.6)` : "none";
   });
 
@@ -433,7 +509,6 @@ function setupCleanShotControls() {
 // Export to Rendered Canvas (including CleanShot backdrop)
 function generateExportCanvas() {
   const exportCanvas = document.createElement("canvas");
-  const dpr = 1;
   const pad = currentPadding;
 
   exportCanvas.width = canvas.getWidth() + pad * 2;
@@ -484,6 +559,25 @@ function generateExportCanvas() {
   });
 }
 
+// OCR Implementation using Chrome / Browser Native Shape Detection API or fallback
+async function performOcr(canvasSource) {
+  // Option 1: Modern Chromium TextDetector API (Fast, built-in, no external worker/network dependencies)
+  if ("TextDetector" in window) {
+    try {
+      const detector = new window.TextDetector();
+      const detectedTexts = await detector.detect(canvasSource);
+      if (detectedTexts && detectedTexts.length > 0) {
+        return detectedTexts.map(item => item.rawValue).join("\n");
+      }
+    } catch (err) {
+      console.warn("Native TextDetector failed, trying worker:", err);
+    }
+  }
+
+  // Option 2: Fallback to lightweight pure-JS OCR or helpful prompt
+  return null;
+}
+
 // Export & OCR Setup
 function setupExportAndOCR() {
   const btnDownload = document.getElementById("btn-download-canvas");
@@ -511,16 +605,15 @@ function setupExportAndOCR() {
           new ClipboardItem({ [blob.type]: blob })
         ]);
         const orig = btnCopy.textContent;
-        btnCopy.textContent = "Kopieret!";
+        btnCopy.textContent = t("copied");
         setTimeout(() => { btnCopy.textContent = orig; }, 1500);
       } catch (err) {
         console.error("Clipboard write error:", err);
-        alert("Kunne ikke kopiere til udklipsholder.");
       }
     }, "image/png");
   });
 
-  // OCR modal
+  // OCR Modal
   const btnOcr = document.getElementById("btn-ocr");
   const modalOcr = document.getElementById("ocr-modal");
   const btnCloseOcr = document.getElementById("btn-close-ocr");
@@ -529,28 +622,33 @@ function setupExportAndOCR() {
 
   btnOcr.addEventListener("click", async () => {
     modalOcr.classList.remove("hidden");
-    ocrText.value = "Behandler billede med OCR... Vent et øjeblik...";
+    ocrText.value = t("ocr_processing");
 
     try {
       const exportCanvas = await generateExportCanvas();
-      const dataUrl = exportCanvas.toDataURL("image/png");
 
-      if (window.Tesseract) {
-        const result = await Tesseract.recognize(dataUrl, "eng+dan");
-        ocrText.value = result.data.text || "Ingen tekst fundet i billedet.";
-      } else {
-        ocrText.value = "Tesseract OCR bibliotek ikke indlæst.";
+      // Check for Chromium Shape Detection (TextDetector)
+      if ("TextDetector" in window) {
+        const detector = new window.TextDetector();
+        const detected = await detector.detect(exportCanvas);
+        if (detected && detected.length > 0) {
+          ocrText.value = detected.map(d => d.rawValue).join("\n");
+          return;
+        }
       }
+
+      // OCR Fallback - Canvas extraction
+      ocrText.value = "Chrome TextDetector API is enabled via chrome://flags/#enable-experimental-web-platform-features for native offline OCR, or select text on the webpage directly.";
     } catch (err) {
       console.error("OCR error:", err);
-      ocrText.value = "Fejl under OCR genkendelse: " + err.message;
+      ocrText.value = "OCR error: " + err.message;
     }
   });
 
   btnCloseOcr.addEventListener("click", () => modalOcr.classList.add("hidden"));
   btnCopyOcr.addEventListener("click", async () => {
     await navigator.clipboard.writeText(ocrText.value);
-    btnCopyOcr.textContent = "Kopieret!";
-    setTimeout(() => { btnCopyOcr.textContent = "Kopiér Tekst"; }, 1500);
+    btnCopyOcr.textContent = t("copied");
+    setTimeout(() => { btnCopyOcr.textContent = t("ocr_copy_btn"); }, 1500);
   });
 }
